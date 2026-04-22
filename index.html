@@ -943,6 +943,7 @@ const PICADAS = [
     id: 'familia',
     nombre: 'Picada Familia',
     img: 'images/familia.png',
+    imgPos: 'right center',
     ingredientes: 'Pategrás · Gruyere · Panceta Ahumada · Jamón Crudo · Salame Milán · Lomo Ahumado · Bastón Español · Bastón Criollo · Aceitunas Verdes y Negras',
     tablita: 30610, tabla: 42200
   },
@@ -950,6 +951,7 @@ const PICADAS = [
     id: 'chicha',
     nombre: 'Picada Chicha',
     img: 'images/chicha.png',
+    imgPos: 'right center',
     ingredientes: 'Pategrás · Saborizado · Mortadela · Calabresa · Jamón Cocido · Matambre de Vaca · Bondiola · Pickles · Aceitunas Negras',
     tablita: 29900, tabla: 47840
   },
@@ -1009,7 +1011,7 @@ function renderPicadas() {
     card.className = 'picada-card';
     card.innerHTML = `
       <div class="picada-img-wrap">
-        <img class="picada-img" src="${p.img}" alt="${p.nombre}" loading="lazy">
+        <img class="picada-img" src="${p.img}" alt="${p.nombre}" loading="lazy" style="${p.imgPos ? `object-position:${p.imgPos}` : ''}">
       </div>
       <h3>${p.nombre}</h3>
       <p class="picada-ingredients">${p.ingredientes}</p>
