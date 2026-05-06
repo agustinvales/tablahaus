@@ -1022,7 +1022,7 @@ const QUESOS = [
   { id: 'sardo-fresco', nombre: 'Sardo Fresco Luz Azul', precioKg: 15400 },
   { id: 'sardo-estacionado', nombre: 'Sardo Estacionado Luz Azul', precioKg: 17600 },
   { id: 'reggianito', nombre: 'Reggianito Luz Azul', precioKg: 16500 },
-  { id: 'provoleta', nombre: 'Provoleta', precioKg: 16100 }
+  { id: 'provoleta', nombre: 'Provoleta', precioKg: 16100, minQty: 0.36, step: 0.18 }
 ];
 
 const SIZES = [
@@ -1052,7 +1052,7 @@ function fmt(n) {
 }
 
 function fmtKg(n) {
-  // n is a multiple of 0.5, show as 1 / 1,5 / 2 etc
+  if (n < 1) return Math.round(n * 1000) + ' g';
   if (Number.isInteger(n)) return n + ' kg';
   return n.toString().replace('.', ',') + ' kg';
 }
@@ -1192,14 +1192,14 @@ function renderQuesos() {
     card.className = 'queso-card';
     card.innerHTML = `
       <div class="queso-name">${q.nombre}</div>
-      <div class="queso-price-kg">${fmt(q.precioKg)} / kg · mínimo 1,5 kg</div>
+      <div class="queso-price-kg">${fmt(q.precioKg)} / kg · mínimo ${fmtKg(q.minQty || 1.5)}</div>
       <div class="queso-stepper">
-        <button class="stepper-btn" data-minus="${q.id}" aria-label="Quitar medio kilo">−</button>
+        <button class="stepper-btn" data-minus="${q.id}" aria-label="Quitar">−</button>
         <div class="stepper-value">
-          <span class="val" id="val-${q.id}">0 kg</span>
-          <span class="unit">mín. 1,5 kg · de a 0,5</span>
+          <span class="val" id="val-${q.id}">0</span>
+          <span class="unit">mín. ${fmtKg(q.minQty || 1.5)} · de a ${fmtKg(q.step || 0.5)}</span>
         </div>
-        <button class="stepper-btn" data-plus="${q.id}" aria-label="Agregar medio kilo">+</button>
+        <button class="stepper-btn" data-plus="${q.id}" aria-label="Agregar">+</button>
       </div>
       <div class="queso-subtotal" id="sub-${q.id}"></div>
     `;
@@ -1207,10 +1207,12 @@ function renderQuesos() {
   });
 
   grid.querySelectorAll('[data-plus]').forEach(btn => {
-    btn.addEventListener('click', () => changeQueso(btn.dataset.plus, +0.5));
+    const q = QUESOS.find(q => q.id === btn.dataset.plus);
+    btn.addEventListener('click', () => changeQueso(q.id, +(q.step || 0.5)));
   });
   grid.querySelectorAll('[data-minus]').forEach(btn => {
-    btn.addEventListener('click', () => changeQueso(btn.dataset.minus, -0.5));
+    const q = QUESOS.find(q => q.id === btn.dataset.minus);
+    btn.addEventListener('click', () => changeQueso(q.id, -(q.step || 0.5)));
   });
 }
 
@@ -1218,20 +1220,21 @@ function changeQueso(quesoId, delta) {
   const queso = QUESOS.find(q => q.id === quesoId);
   const itemKey = `queso-${quesoId}`;
   let item = cart.find(i => i.key === itemKey);
+  const minQty = queso.minQty || 1.5;
+  const precision = 1 / (queso.step || 0.5);
   if (!item && delta > 0) {
-    // add new with 1.5kg (mínimo)
     item = {
       key: itemKey,
       type: 'queso',
       nombre: queso.nombre,
-      qty: 1.5,
+      qty: minQty,
       unitPrice: queso.precioKg,
-      subtotal: queso.precioKg * 1.5
+      subtotal: queso.precioKg * minQty
     };
     cart.push(item);
   } else if (item) {
-    const newQty = Math.round((item.qty + delta) * 2) / 2; // keep 0.5 increments
-    if (newQty < 1.5) {
+    const newQty = Math.round((item.qty + delta) * precision) / precision;
+    if (newQty < minQty) {
       // remove (por debajo del mínimo)
       cart = cart.filter(i => i.key !== itemKey);
       item = null;
