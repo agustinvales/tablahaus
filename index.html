@@ -568,6 +568,49 @@
     color: var(--bordo-oscuro);
     margin-bottom: 14px;
   }
+  .cart-discount-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #2a9d4e;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .promo-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .promo-row input {
+    flex: 1;
+    border: 1.5px solid rgba(92, 30, 30, 0.25);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    outline: none;
+  }
+  .promo-row input:focus { border-color: var(--bordo); }
+  .promo-apply-btn {
+    background: var(--bordo);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .promo-apply-btn:hover { background: var(--bordo-oscuro); }
+  .promo-msg {
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+    min-height: 1em;
+  }
+  .promo-msg.ok { color: #2a9d4e; }
+  .promo-msg.err { color: #c0392b; }
 
   /* CHECKOUT FORM */
   .checkout {
@@ -887,6 +930,15 @@
     <div class="cart-empty">Tu carrito está vacío.<br>Agregá una picada o queso para empezar.</div>
   </div>
   <div class="cart-footer">
+    <div class="promo-row">
+      <input type="text" id="promo-input" placeholder="Código promocional" maxlength="20">
+      <button class="promo-apply-btn" onclick="applyPromo()">Aplicar</button>
+    </div>
+    <div class="promo-msg" id="promo-msg"></div>
+    <div class="cart-discount-row" id="cart-discount-row" style="display:none">
+      <span id="cart-discount-label">Descuento</span>
+      <span id="cart-discount-amount"></span>
+    </div>
     <div class="cart-total">
       <span>Total</span>
       <span id="cart-total">$0</span>
@@ -984,6 +1036,11 @@ const WHATSAPP_NUMBER = '5491178274377';
    STATE
    ========================================================= */
 let cart = []; // { id, type: 'picada'|'queso', nombre, size?, qty, unitPrice, subtotal }
+let appliedPromo = null; // { code, discount } e.g. { code: 'AMIGOS15', discount: 0.15 }
+
+const PROMO_CODES = {
+  'AMIGOS15': 0.15
+};
 let picadaSelectedSize = {}; // picadaId -> sizeKey
 let picadaQty = {}; // picadaId -> integer qty (default 1)
 
@@ -1202,6 +1259,33 @@ function updateQuesoDisplay(quesoId) {
 }
 
 /* =========================================================
+   PROMO CODE
+   ========================================================= */
+function applyPromo() {
+  const input = document.getElementById('promo-input');
+  const msgEl = document.getElementById('promo-msg');
+  const code = input.value.trim().toUpperCase();
+
+  if (!code) {
+    msgEl.className = 'promo-msg err';
+    msgEl.textContent = 'Ingresá un código.';
+    return;
+  }
+
+  if (PROMO_CODES[code]) {
+    appliedPromo = { code, discount: PROMO_CODES[code] };
+    msgEl.className = 'promo-msg ok';
+    msgEl.textContent = '¡Código aplicado! ' + (PROMO_CODES[code] * 100) + '% de descuento.';
+    input.disabled = true;
+  } else {
+    appliedPromo = null;
+    msgEl.className = 'promo-msg err';
+    msgEl.textContent = 'Código inválido.';
+  }
+  renderCart();
+}
+
+/* =========================================================
    CART RENDER
    ========================================================= */
 function renderCart() {
@@ -1244,7 +1328,21 @@ function renderCart() {
   });
   body.innerHTML = html;
   countEl.textContent = count.toString().replace('.', ',');
-  totalEl.textContent = fmt(total);
+
+  const discountRow = document.getElementById('cart-discount-row');
+  const discountLabel = document.getElementById('cart-discount-label');
+  const discountAmount = document.getElementById('cart-discount-amount');
+
+  if (appliedPromo) {
+    const descuento = total * appliedPromo.discount;
+    discountRow.style.display = 'flex';
+    discountLabel.textContent = 'Descuento (' + appliedPromo.code + ' −' + (appliedPromo.discount * 100) + '%)';
+    discountAmount.textContent = '−' + fmt(descuento);
+    totalEl.textContent = fmt(total - descuento);
+  } else {
+    discountRow.style.display = 'none';
+    totalEl.textContent = fmt(total);
+  }
 }
 
 function removeFromCart(key) {
@@ -1344,7 +1442,13 @@ function sendOrder(e) {
       msg += '• ' + item.nombre + ' — ' + fmtKg(item.qty) + ' = ' + fmt(item.subtotal) + '\n';
     }
   });
-  msg += '\n*TOTAL: ' + fmt(total) + '*\n';
+  if (appliedPromo) {
+    const descuento = total * appliedPromo.discount;
+    msg += '\n_Descuento ' + appliedPromo.code + ' (−' + (appliedPromo.discount * 100) + '%): −' + fmt(descuento) + '_';
+    msg += '\n*TOTAL CON DESCUENTO: ' + fmt(total - descuento) + '*\n';
+  } else {
+    msg += '\n*TOTAL: ' + fmt(total) + '*\n';
+  }
   msg += '\n¡Gracias! Quedo a la espera de la confirmación.';
 
   const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
