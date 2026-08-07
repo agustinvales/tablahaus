@@ -1040,7 +1040,8 @@ let cart = []; // { id, type: 'picada'|'queso', nombre, size?, qty, unitPrice, s
 let appliedPromo = null; // { code, discount } e.g. { code: 'AMIGOS15', discount: 0.15 }
 
 const PROMO_CODES = {
-  'AMIGOS15': 0.15
+  'AMIGOS15': { discount: 0.15 },
+  'EVENTOS20': { discount: 0.20, minOrder: 200000 }
 };
 let picadaSelectedSize = {}; // picadaId -> sizeKey
 let picadaQty = {}; // picadaId -> integer qty (default 1)
@@ -1276,10 +1277,19 @@ function applyPromo() {
     return;
   }
 
-  if (PROMO_CODES[code]) {
-    appliedPromo = { code, discount: PROMO_CODES[code] };
+  const promo = PROMO_CODES[code];
+  if (promo) {
+    const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    if (promo.minOrder && subtotal < promo.minOrder) {
+      appliedPromo = null;
+      msgEl.className = 'promo-msg err';
+      msgEl.textContent = 'Código válido solo para pedidos desde ' + fmt(promo.minOrder) + '.';
+      renderCart();
+      return;
+    }
+    appliedPromo = { code, discount: promo.discount };
     msgEl.className = 'promo-msg ok';
-    msgEl.textContent = '¡Código aplicado! ' + (PROMO_CODES[code] * 100) + '% de descuento.';
+    msgEl.textContent = '¡Código aplicado! ' + (promo.discount * 100) + '% de descuento.';
     input.disabled = true;
   } else {
     appliedPromo = null;
@@ -1336,6 +1346,18 @@ function renderCart() {
   const discountRow = document.getElementById('cart-discount-row');
   const discountLabel = document.getElementById('cart-discount-label');
   const discountAmount = document.getElementById('cart-discount-amount');
+
+  if (appliedPromo) {
+    const promoDef = PROMO_CODES[appliedPromo.code];
+    if (promoDef && promoDef.minOrder && total < promoDef.minOrder) {
+      appliedPromo = null;
+      const input = document.getElementById('promo-input');
+      const msgEl = document.getElementById('promo-msg');
+      input.disabled = false;
+      msgEl.className = 'promo-msg err';
+      msgEl.textContent = 'El código requiere un pedido mínimo de ' + fmt(promoDef.minOrder) + '. Se quitó el descuento.';
+    }
+  }
 
   if (appliedPromo) {
     const descuento = total * appliedPromo.discount;
