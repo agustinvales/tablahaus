@@ -976,21 +976,21 @@ const PICADAS = [
     nombre: 'Picada Mis Amigos',
     img: 'images/mis-amigos.png',
     ingredientes: 'Pategras · Gouda · Jamón cocido · Jamón crudo · Bondiola · Lomo Suizo · Bastón Español · Bastón Criollo · Aceitunas Verdes y Negras',
-    tablita: 33343, tabla: 48226
+    tablita: 34700, tabla: 49757
   },
   {
     id: 'fan',
     nombre: 'Picada FAN',
     img: 'images/fan.png',
     ingredientes: 'Roquefort · Fontina · Pategrás · Lomo · Jamón Crudo · Bondiola · Bastón Español · Bastón Grueso · Leber · Cereza · Aceitunas Negras',
-    tablita: 37585, tabla: 48190
+    tablita: 39078, tabla: 49830
   },
   {
     id: 'veggie',
     nombre: 'Picada Veggie',
     img: 'images/veggie.png',
     ingredientes: 'Sardo fresco · Gruyere · Fontina · Cheddar Saborizado · Roquefort · Aceitunas Verdes y Negras · Cerezas',
-    tablita: 33773, tabla: 52621
+    tablita: 35419, tabla: 54776
   },
   {
     id: 'familia',
@@ -998,7 +998,7 @@ const PICADAS = [
     img: 'images/familia.png',
     imgPos: 'right center',
     ingredientes: 'Pategrás · Gruyere · Panceta Ahumada · Jamón Crudo · Salame Milán · Lomo Ahumado · Bastón Español · Bastón Criollo · Aceitunas Verdes y Negras',
-    tablita: 35338, tabla: 47864
+    tablita: 37272, tabla: 50166
   },
   {
     id: 'chicha',
@@ -1006,14 +1006,14 @@ const PICADAS = [
     img: 'images/chicha.png',
     imgPos: 'right center',
     ingredientes: 'Pategrás · Saborizado · Mortadela · Calabresa · Jamón Cocido · Matambre de Vaca · Bondiola · Pickles · Aceitunas Negras',
-    tablita: 36687, tabla: 57514
+    tablita: 38138, tabla: 59322
   },
   {
     id: 'champion',
     nombre: 'Picada Champion',
     img: 'images/champion.png',
     ingredientes: 'Pategrás · Gouda · Trenza con semillas · Bondiola · Salame Milán · Lomo ahumado · Longaniza Bastón · Cerezas al maraschino · Aceitunas verdes · Mix frutos secos runner',
-    tablita: 32986, tabla: 45696
+    tablita: 34521, tabla: 47305
   }
 ];
 
@@ -1194,12 +1194,12 @@ function renderQuesos() {
     card.className = 'queso-card';
     card.innerHTML = `
       <div class="queso-name">${q.nombre}</div>
-      <div class="queso-price-kg">${fmt(q.precioKg)} / kg · mínimo ${fmtKg(q.minQty || 1.5)}</div>
+      <div class="queso-price-kg">${fmt(q.precioKg)} / kg · mínimo ${fmtKg(q.minQty || 1)}</div>
       <div class="queso-stepper">
         <button class="stepper-btn" data-minus="${q.id}" aria-label="Quitar">−</button>
         <div class="stepper-value">
           <span class="val" id="val-${q.id}">0</span>
-          <span class="unit">mín. ${fmtKg(q.minQty || 1.5)} · de a ${fmtKg(q.step || 0.5)}</span>
+          <span class="unit">mín. ${fmtKg(q.minQty || 1)} · de a ${fmtKg(q.step || 0.5)}</span>
         </div>
         <button class="stepper-btn" data-plus="${q.id}" aria-label="Agregar">+</button>
       </div>
@@ -1222,7 +1222,7 @@ function changeQueso(quesoId, delta) {
   const queso = QUESOS.find(q => q.id === quesoId);
   const itemKey = `queso-${quesoId}`;
   let item = cart.find(i => i.key === itemKey);
-  const minQty = queso.minQty || 1.5;
+  const minQty = queso.minQty || 1;
   const precision = 1 / (queso.step || 0.5);
   if (!item && delta > 0) {
     item = {
